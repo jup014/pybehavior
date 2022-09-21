@@ -1,11 +1,21 @@
 import datetime
 import logging
 import pandas as pd
+from pandas.core.frame import DataFrame
 
 class Participant:
     def __init__(self):
         print("Participant is constructed")
 
+class Preprocessor:
+    def merge_rows(data: DataFrame):
+        data = data.reset_index()
+        data['shifted_end'] = data.groupby(['user'])[['end']].shift(fill_value=datetime.datetime(datetime.MAXYEAR, 12, 31, 23, 59))
+        data['group'] = ((1 - (data['start'] == data['shifted_end'])).cumsum())
+        data = data.groupby(['user', 'group']).agg({'start': 'first', 'end': 'last', 'steps': 'mean'}).reset_index().set_index(['user', 'start', 'end'])
+        data = data.drop('group', axis=1)
+        
+        return data
 
 class DataSet:
     def __init__(self):

@@ -1,35 +1,23 @@
 import logging
+from typing import List
 import pandas as pd
 from pandas import read_csv, to_datetime
+from pandas.core.frame import DataFrame
 from .models import DataSet
 
 
 
 class Loader:
-    def read_csv(filename,
-        participant='user',
-        start_time_local='start_utime_local',
-        end_time_local='end_utime_local',
-        value='steps'
-    ) -> DataSet:
-        pd.options.mode.chained_assignment = None  # default='warn'
-        
-        df = read_csv(filename, low_memory=False)
-
-        data_set = DataSet()        
-        df2 = df[[participant, start_time_local, end_time_local, value]]
-
-        df2.columns.values[0] = 'participant'
-        df2.columns.values[1] = 'start_time_local'
-        df2.columns.values[2] = 'end_time_local'
-        df2.columns.values[3] = 'value'
-
-        df2['start_time_local'] = to_datetime(df2['start_time_local'])
-        df2['end_time_local'] = df2['end_time_local'].astype('datetime64[ns]')
-
-        df2['timespan'] = df2['end_time_local'] - df2['start_time_local']
-        data_set.data = df2
-
-        logging.debug(data_set.data.head())
-
-        return data_set
+    def pick_columns(
+        data:DataFrame,
+        user:str,
+        start_datetime:str,
+        end_datetime:str,
+        values:List[str]
+    ) -> DataFrame:
+        column_list = [user, start_datetime, end_datetime] + values
+        return_data = data[column_list].rename(columns={user: 'user', start_datetime: 'start', end_datetime: 'end'})
+        return_data['start'] = pd.to_datetime(return_data.start)
+        return_data['end'] = pd.to_datetime(return_data.end)
+        return_data = return_data.set_index(['user', 'start', 'end'])
+        return return_data
