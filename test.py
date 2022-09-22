@@ -4,6 +4,7 @@ import logging
 import datetime
 
 from unittest import TestCase
+from pybehavior.models import DataSet
 
 from pybehavior.tools import Loader, Preprocessor
 
@@ -35,6 +36,10 @@ class ParticipantTestCase(TestCase):
                 data = src_data.query('duration >= datetime.timedelta(minutes=5)')
             elif data_id == 6:
                 data = Preprocessor.get_hourly_activity_data(src_data)
+            elif data_id == 7:
+                dataset = DataSet(src_data)
+                today = datetime.datetime(2015, 8, 15)
+                data = dataset.query(user=1, start=today - datetime.timedelta(days=35), end=today, values=['activity'])
             else:
                 raise Exception("Unknown data_id: {}".format(data_id))
             data.to_pickle(data_path)
@@ -77,9 +82,9 @@ class ParticipantTestCase(TestCase):
         data4 = self.try_to_load_data(4, data3)
         data5 = self.try_to_load_data(5, data4)
         data6 = self.try_to_load_data(6, data5)
-
-
-
+        data7 = self.try_to_load_data(7, data6)
+        logging.debug(data7)
+        
 
 if __name__ == '__main__':
     unittest.main()
