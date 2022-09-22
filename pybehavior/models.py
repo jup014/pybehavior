@@ -22,3 +22,10 @@ class DataSet:
         q2 = pd.merge(empty_hours, q, on=['user', 'start', 'end'], how="outer").fillna(0)
         
         return q2['activity']
+
+
+class EMA(DataSet):
+    def __init__(self, data, user='user', label_column='question_label'):
+        super().__init__(data)
+
+        self.item_refresh()
