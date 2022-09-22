@@ -133,3 +133,5 @@ dmypy.json
 .DS_Store
 .vscode/
 data/
+
+hours_with_012.csv
