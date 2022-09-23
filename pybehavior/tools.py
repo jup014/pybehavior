@@ -29,8 +29,8 @@ class Preprocessor:
         data['shifted_end'] = data.groupby(['user'])[['end']].shift(fill_value=datetime.datetime(datetime.MAXYEAR, 12, 31, 23, 59))
         data['group'] = ((1 - (data['start'] == data['shifted_end'])).cumsum())
         data = data.groupby(['user', 'group']).agg({'start': 'first', 'end': 'last', 'steps': 'mean'}).reset_index()
-        logging.debug(data.head(10))
         data['duration'] = data['end'] - data['start']
+        data = data.sort_values(['user', 'start', 'end'])
         data = data.set_index(['user', 'start', 'end']).drop('group', axis=1)
 
         return data
@@ -96,7 +96,6 @@ class Preprocessor:
         hours_with_12 = pd.merge(hours_with_activity, hours_with_data, on=['user', 'start', 'end'], how="outer").fillna(1)
         
         full_day_range = hours_with_data.groupby('user').agg({'start': min, 'end': max}).reset_index()
-        
         hours_full_day_range = Preprocessor.get_resampled_data(full_day_range, group='user', start='start', end='end', span_unit='day', unit='hour')
         
         hours_with_012 = pd.merge(hours_with_12, hours_full_day_range, on=['user', 'start', 'end'], how='outer').fillna(0)

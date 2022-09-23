@@ -111,6 +111,7 @@ class EMATestCase(TestCase):
                 logging.debug(src_data)
                 data = src_data.groupby(['rnum', 'created', 'question_id']).agg({"answer_value": "mean"})
                 data = data.pivot_table(index=['rnum', 'created'], columns=['question_id'], values='answer_value')
+                data = data.sort_values(['rnum', 'created']).reset_index(drop=True)
             else:
                 raise Exception("Unknown data_id: {}".format(data_id))
             data.to_pickle(data_path)
