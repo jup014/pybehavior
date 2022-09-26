@@ -70,9 +70,16 @@ class Preprocessor:
                 timefreq = 'D'
             
             date_range = pd.date_range(start_datetime, periods=timedelta, freq=timefreq)
+            if unit == 'hour':
+                time_unit = datetime.timedelta(hours=1)
+            elif unit == 'day':
+                time_unit = datetime.timedelta(days=1)
+            else:
+                raise ValueError('Invalid unit: %s' % unit)
+
             data_dict = {
                     start: date_range,
-                    end: date_range + datetime.timedelta(hours=1)
+                    end: date_range + time_unit
                 }
             if group:
                 data_dict[group] = group_info
@@ -80,9 +87,9 @@ class Preprocessor:
         
         data = pd.concat(data.apply(t, axis=1).tolist()).reset_index(drop=True)
         if group:
-            column_order = [group, 'start', 'end']
+            column_order = [group, start, end]
         else:
-            column_order = ['start', 'end']
+            column_order = [start, end]
         data = data[column_order].drop_duplicates().sort_values(column_order).reset_index(drop=True)
 
         return data
@@ -103,3 +110,30 @@ class Preprocessor:
         hours_with_012 = hours_with_012.sort_values(['user', 'start', 'end']).reset_index(drop=True)
         
         return hours_with_012
+
+    def fill_missing_dates(data, date, group=None):
+        date_min = '{}_min'.format(date)
+        date_max = '{}_max'.format(date)
+
+        data[date] = pd.to_datetime(data[date])
+        if group:
+            date_span = data.groupby(group).agg({date: ['min', 'max']})
+        else:
+            date_span = data.groupby(group).agg({date: ['min', 'max']})
+        
+        date_span = date_span.reset_index()
+        
+        if group:
+            date_span.columns = [group, date_min, date_max]
+        else:
+            date_span.columns = [date_min, date_max]
+
+        every_day = Preprocessor.get_resampled_data(date_span, group=group, start=date_min, end=date_max, span_unit='day', unit='day')
+        
+        if group:
+            every_day = every_day[[group, date_min]].rename(columns={date_min: date})
+            return pd.merge(data, every_day, on=[group, date], how="outer", sort=True)
+        else:
+            every_day = every_day[[date_min]].rename(columns={date_min: date})
+            return pd.merge(data, every_day, on=[date], how="outer", sort=True)
+        

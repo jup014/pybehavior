@@ -45,37 +45,7 @@ class WalkTestCase(TestCase):
             data.to_pickle(data_path)
             return data
 
-    def test_pick_columns(self):
-        data = self.try_to_load_data(1)
-        data2 = self.try_to_load_data(2, data)
-    
-    def test_filter_out_1(self):
-        data = self.try_to_load_data(1)
-        data2 = self.try_to_load_data(2, data)
-        data3 = self.try_to_load_data(3, data2)
-
-    def test_merge_rows(self):
-        data = self.try_to_load_data(1)
-        data2 = self.try_to_load_data(2, data)
-        data3 = self.try_to_load_data(3, data2)
-        data4 = self.try_to_load_data(4, data3)
-    
-    def test_filter_out_2(self):
-        data = self.try_to_load_data(1)
-        data2 = self.try_to_load_data(2, data)
-        data3 = self.try_to_load_data(3, data2)
-        data4 = self.try_to_load_data(4, data3)
-        data5 = self.try_to_load_data(5, data4)
-
-    def test_sample(self):
-        data = self.try_to_load_data(1)
-        data2 = self.try_to_load_data(2, data)
-        data3 = self.try_to_load_data(3, data2)
-        data4 = self.try_to_load_data(4, data3)
-        data5 = self.try_to_load_data(5, data4)
-        data6 = self.try_to_load_data(6, data5)
-
-    def test_query(self):
+    def test_sequence(self):
         data = self.try_to_load_data(1)
         data2 = self.try_to_load_data(2, data)
         data3 = self.try_to_load_data(3, data2)
@@ -108,10 +78,32 @@ class EMATestCase(TestCase):
                 data = src_data[['rnum', 'created', 'question_id', 'answer_value']]
                 data['created'] = pd.to_datetime(data['created']).dt.date
             elif data_id == 4:
-                logging.debug(src_data)
                 data = src_data.groupby(['rnum', 'created', 'question_id']).agg({"answer_value": "mean"})
                 data = data.pivot_table(index=['rnum', 'created'], columns=['question_id'], values='answer_value')
-                data = data.sort_values(['rnum', 'created']).reset_index(drop=True)
+                data = data.sort_values(['rnum', 'created']).reset_index()
+                data.columns.name = None
+            elif data_id == 5:
+                data = Preprocessor.fill_missing_dates(src_data, id='rnum', date='created', columns=[
+                        'E5',
+                        'E6',
+                        'E7',
+                        'E8',
+                        'E10',
+                        'E11',
+                        'E12.1.1',
+                        'E12.1.2',
+                        'E12.4',
+                        'E12.7',
+                        'E13.1',
+                        'E13.2',
+                        'E13.3',
+                        'E13.4',
+                        'E13.5',
+                        'E13.6',
+                        'E13.7',
+                        'E14'
+                    ]
+                )
             else:
                 raise Exception("Unknown data_id: {}".format(data_id))
             data.to_pickle(data_path)
@@ -139,24 +131,24 @@ class EMATestCase(TestCase):
             'My <b>typical Sunday includes being active.</b>'
         ]
         question_id = [
-            'C3',
-            'C4',
-            'C5',
-            'C6',
-            'C7',
-            'C8',
-            'C9',
-            'D1',
-            'D2',
-            'D3',
-            'D4',
-            'E1',
-            'E1',
-            'E1',
-            'E1',
-            'E1',
-            'E1',
-            'E1'
+            'E5',
+            'E7',
+            'E6',
+            'E8',
+            'E12.1.1',
+            'E10',
+            'E11',
+            'E14',
+            'E12.7',
+            'E12.4',
+            'E12.1.2',
+            'E13.1',
+            'E13.2',
+            'E13.3',
+            'E13.4',
+            'E13.5',
+            'E13.6',
+            'E13.7'
         ]
 
         return src_data['question_label'].replace(question_label, question_id)
@@ -166,6 +158,7 @@ class EMATestCase(TestCase):
         data = self.try_to_load_data(2, data)
         data = self.try_to_load_data(3, data)
         data = self.try_to_load_data(4, data)
+        data = self.try_to_load_data(5, data)
         logging.debug(data.shape)
         logging.debug(data)
 
