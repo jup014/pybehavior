@@ -83,27 +83,12 @@ class EMATestCase(TestCase):
                 data = data.sort_values(['rnum', 'created']).reset_index()
                 data.columns.name = None
             elif data_id == 5:
-                data = Preprocessor.fill_missing_dates(src_data, id='rnum', date='created', columns=[
-                        'E5',
-                        'E6',
-                        'E7',
-                        'E8',
-                        'E10',
-                        'E11',
-                        'E12.1.1',
-                        'E12.1.2',
-                        'E12.4',
-                        'E12.7',
-                        'E13.1',
-                        'E13.2',
-                        'E13.3',
-                        'E13.4',
-                        'E13.5',
-                        'E13.6',
-                        'E13.7',
-                        'E14'
-                    ]
-                )
+                data = Preprocessor.fill_missing_dates(src_data, group='rnum', date='created')
+            elif data_id == 6:
+                first_days = src_data.groupby(['rnum']).agg({'created': 'min'}).rename(columns = {'created': 'first_day'}).reset_index()
+                data = pd.merge(src_data, first_days, on = 'rnum')
+                data['day_index'] = (data['created'] - data['first_day']).dt.days
+                data = data.drop('first_day', axis=1)
             else:
                 raise Exception("Unknown data_id: {}".format(data_id))
             data.to_pickle(data_path)
@@ -159,6 +144,7 @@ class EMATestCase(TestCase):
         data = self.try_to_load_data(3, data)
         data = self.try_to_load_data(4, data)
         data = self.try_to_load_data(5, data)
+        data = self.try_to_load_data(6, data)
         logging.debug(data.shape)
         logging.debug(data)
 
