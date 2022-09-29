@@ -89,6 +89,9 @@ class EMATestCase(TestCase):
                 data = pd.merge(src_data, first_days, on = 'rnum')
                 data['day_index'] = (data['created'] - data['first_day']).dt.days
                 data = data.drop('first_day', axis=1)
+            elif data_id == 7:
+                src_data['day_of_week'] = src_data.created.dt.day_of_week
+                data = src_data
             else:
                 raise Exception("Unknown data_id: {}".format(data_id))
             data.to_pickle(data_path)
@@ -145,6 +148,7 @@ class EMATestCase(TestCase):
         data = self.try_to_load_data(4, data)
         data = self.try_to_load_data(5, data)
         data = self.try_to_load_data(6, data)
+        data = self.try_to_load_data(7, data)
         logging.debug(data.shape)
         logging.debug(data)
 
