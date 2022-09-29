@@ -92,6 +92,10 @@ class EMATestCase(TestCase):
             elif data_id == 7:
                 src_data['day_of_week'] = src_data.created.dt.day_of_week
                 data = src_data
+            elif data_id == 8:
+                walk = pd.read_csv('data/ema/steps_20220922.csv')
+                walk['date'] = pd.to_datetime(walk.date)
+                data = pd.merge(src_data, walk, left_on=['rnum', 'created'], right_on=['rnum', 'date'], how="outer").drop('date', axis=1)
             else:
                 raise Exception("Unknown data_id: {}".format(data_id))
             data.to_pickle(data_path)
@@ -149,6 +153,7 @@ class EMATestCase(TestCase):
         data = self.try_to_load_data(5, data)
         data = self.try_to_load_data(6, data)
         data = self.try_to_load_data(7, data)
+        data = self.try_to_load_data(8, data)
         logging.debug(data.shape)
         logging.debug(data)
 
