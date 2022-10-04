@@ -135,3 +135,5 @@ dmypy.json
 data/
 
 hours_with_012.csv
+*.sqlite
+log.txt

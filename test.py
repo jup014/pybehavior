@@ -6,7 +6,7 @@ import datetime
 from unittest import TestCase
 from pybehavior.models import DataSet
 
-from pybehavior.tools import Loader, Preprocessor
+from pybehavior.tools import Loader, Preprocessor, WeatherProcessor
 
 import pandas as pd
 
@@ -95,7 +95,34 @@ class EMATestCase(TestCase):
             elif data_id == 8:
                 walk = pd.read_csv('data/ema/steps_20220922.csv')
                 walk['date'] = pd.to_datetime(walk.date)
-                data = pd.merge(src_data, walk, left_on=['rnum', 'created'], right_on=['rnum', 'date'], how="outer").drop('date', axis=1)
+                data = pd.merge(src_data, walk, left_on=['rnum', 'created'], right_on=['rnum', 'date'], how="left").drop('date', axis=1)
+            elif data_id == 9:
+                key = os.environ.get('NCEIKEY')
+                weather = WeatherProcessor(key)
+                # weather.refresh_weather_info()
+
+                user_zipcode = pd.read_csv('data/ema/user_zipcode.csv')
+
+                data = pd.merge(src_data, user_zipcode, on=['rnum'])
+                data = pd.merge(data, weather.weather_by_zipcode_db, left_on=['zipcode', 'created'], right_on=['zipcode', 'date'], how="left").sort_values(['rnum', 'created'])
+                data = data.drop('created', axis=1)
+            elif data_id == 10:
+                data = src_data
+                data['E9'] = data['E8']
+                data['E12.5'] = data['E12.4']
+                data['E12.6'] = data['E12.4']
+
+                data['self_efficacy'] = data[['E5', 'E10', 'E11']].mean(axis=1)
+                data['perceived_barrier'] = data[['E8', 'E9']].mean(axis=1)
+                data['environmental_context'] = data[['E6', 'E7']].mean(axis=1)
+                data['neg_E8'] = -data['E8']
+                data['neg_E9'] = -data['E9']
+                data['context_of_walking'] = data[['E7', 'neg_E8']].mean(axis=1)
+                data['typicalness_of_context'] = data[['E6', 'neg_E9']].mean(axis=1)
+                data['self_management_skills'] = data[['E12.1.1', 'E12.1.2']].mean(axis=1)
+                data['cue_to_action'] = data[['E12.4', 'E12.5', 'E12.6', 'E12.7']].mean(axis=1)
+                data['environmental_context_weekly'] = data[['E13.1', 'E13.2', 'E13.3', 'E13.4', 'E13.5', 'E13.6', 'E13.7']].mean(axis=1)
+                data['social_support_friends'] = data['E14']
             else:
                 raise Exception("Unknown data_id: {}".format(data_id))
             data.to_pickle(data_path)
@@ -154,6 +181,8 @@ class EMATestCase(TestCase):
         data = self.try_to_load_data(6, data)
         data = self.try_to_load_data(7, data)
         data = self.try_to_load_data(8, data)
+        data = self.try_to_load_data(9, data)
+        data = self.try_to_load_data(10, data)
         logging.debug(data.shape)
         logging.debug(data)
 
