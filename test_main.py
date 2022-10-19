@@ -58,6 +58,7 @@ if not os.path.exists('data/ema/queue.json'):
         del save_queue
         save_queue = []
 
+queue = TinyDB('data/ema/queue.json')
 while True:
     Job = Query()
 
