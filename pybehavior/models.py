@@ -29,3 +29,4 @@ class EMA(DataSet):
         super().__init__(data)
 
         self.item_refresh()
+

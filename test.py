@@ -1,4 +1,5 @@
 import os
+from typing import Optional, Union
 import unittest
 import logging
 import datetime
@@ -62,69 +63,81 @@ class EMATestCase(TestCase):
         pd.set_option('display.max_colwidth', None)
         pd.set_option('display.max_columns', None)  
 
-    def try_to_load_data(self, data_id:int, src_data=None):
+    def try_to_load_data(self, data_id:int, src_data:Optional[pd.DataFrame]=None):
         data_dir = 'data/ema/'
         data_path = os.path.join(data_dir, "data{}.pickle".format(data_id))
 
         if os.path.exists(data_path):
             return pd.read_pickle(data_path)
         else:
-            if data_id == 1:
-                data = pd.read_csv('data/ema/ema.csv', low_memory=False)
-            elif data_id == 2:
-                data = src_data.copy()
-                data['question_id'] = self.recode_question_id(src_data)
-            elif data_id == 3:
-                data = src_data[['rnum', 'created', 'question_id', 'answer_value']]
-                data['created'] = pd.to_datetime(data['created']).dt.date
-            elif data_id == 4:
-                data = src_data.groupby(['rnum', 'created', 'question_id']).agg({"answer_value": "mean"})
-                data = data.pivot_table(index=['rnum', 'created'], columns=['question_id'], values='answer_value')
-                data = data.sort_values(['rnum', 'created']).reset_index()
-                data.columns.name = None
-            elif data_id == 5:
-                data = Preprocessor.fill_missing_dates(src_data, group='rnum', date='created')
-            elif data_id == 6:
-                first_days = src_data.groupby(['rnum']).agg({'created': 'min'}).rename(columns = {'created': 'first_day'}).reset_index()
-                data = pd.merge(src_data, first_days, on = 'rnum')
-                data['day_index'] = (data['created'] - data['first_day']).dt.days
-                data = data.drop('first_day', axis=1)
-            elif data_id == 7:
-                src_data['day_of_week'] = src_data.created.dt.day_of_week
-                data = src_data
-            elif data_id == 8:
-                walk = pd.read_csv('data/ema/steps_20220922.csv')
-                walk['date'] = pd.to_datetime(walk.date)
-                data = pd.merge(src_data, walk, left_on=['rnum', 'created'], right_on=['rnum', 'date'], how="left").drop('date', axis=1)
-            elif data_id == 9:
-                key = os.environ.get('NCEIKEY')
-                weather = WeatherProcessor(key)
-                # weather.refresh_weather_info()
+            if src_data is not None:
+                if data_id == 2:
+                    data = src_data.copy()
+                    data['question_id'] = self.recode_question_id(src_data)
+                elif data_id == 3:
+                    data = src_data[['rnum', 'created', 'question_id', 'answer_value']]
+                    data['created'] = pd.to_datetime(data['created']).dt.date
+                elif data_id == 4:
+                    data = src_data.groupby(['rnum', 'created', 'question_id']).agg({"answer_value": "mean"})
+                    data = data.pivot_table(index=['rnum', 'created'], columns=['question_id'], values='answer_value')
+                    data = data.sort_values(['rnum', 'created']).reset_index()
+                    data.columns.name = None
+                elif data_id == 5:
+                    data = Preprocessor.fill_missing_dates(src_data, group='rnum', date='created')
+                elif data_id == 6:
+                    first_days = src_data.groupby(['rnum']).agg({'created': 'min'}).rename(columns = {'created': 'first_day'}).reset_index()
+                    data = pd.merge(src_data, first_days, on = 'rnum')
+                    data['day_index'] = (data['created'] - data['first_day']).dt.days
+                    data = data.drop('first_day', axis=1)
+                elif data_id == 7:
+                    src_data['day_of_week'] = src_data.created.dt.day_of_week
+                    data = src_data
+                elif data_id == 8:
+                    walk = pd.read_csv('data/ema/steps_20220922.csv')
+                    walk['date'] = pd.to_datetime(walk.date)
+                    data = pd.merge(src_data, walk, left_on=['rnum', 'created'], right_on=['rnum', 'date'], how="left").drop('date', axis=1)
+                elif data_id == 9:
+                    key = os.environ.get('NCEIKEY')
+                    weather = WeatherProcessor(key)
+                    weather.refresh_weather_info()
 
-                user_zipcode = pd.read_csv('data/ema/user_zipcode.csv')
+                    user_zipcode = pd.read_csv('data/ema/user_zipcode.csv')
 
-                data = pd.merge(src_data, user_zipcode, on=['rnum'])
-                data = pd.merge(data, weather.weather_by_zipcode_db, left_on=['zipcode', 'created'], right_on=['zipcode', 'date'], how="left").sort_values(['rnum', 'created'])
-                data = data.drop('created', axis=1)
-            elif data_id == 10:
-                data = src_data
-                data['E9'] = data['E8']
-                data['E12.5'] = data['E12.4']
-                data['E12.6'] = data['E12.4']
-
-                data['self_efficacy'] = data[['E5', 'E10', 'E11']].mean(axis=1)
-                data['perceived_barrier'] = data[['E8', 'E9']].mean(axis=1)
-                data['environmental_context'] = data[['E6', 'E7']].mean(axis=1)
-                data['neg_E8'] = -data['E8']
-                data['neg_E9'] = -data['E9']
-                data['context_of_walking'] = data[['E7', 'neg_E8']].mean(axis=1)
-                data['typicalness_of_context'] = data[['E6', 'neg_E9']].mean(axis=1)
-                data['self_management_skills'] = data[['E12.1.1', 'E12.1.2']].mean(axis=1)
-                data['cue_to_action'] = data[['E12.4', 'E12.5', 'E12.6', 'E12.7']].mean(axis=1)
-                data['environmental_context_weekly'] = data[['E13.1', 'E13.2', 'E13.3', 'E13.4', 'E13.5', 'E13.6', 'E13.7']].mean(axis=1)
-                data['social_support_friends'] = data['E14']
+                    data = pd.merge(src_data, user_zipcode, on=['rnum'])
+                    data = pd.merge(data, weather.weather_by_zipcode_db, left_on=['zipcode', 'created'], right_on=['zipcode', 'date'], how="left").sort_values(['rnum', 'created'])
+                    data = data.drop('created', axis=1)
+                elif data_id == 10:
+                    data = src_data
+                    
+                    data['self_efficacy'] = data[['E5', 'E10', 'E11']].mean(axis=1)
+                    data['perceived_barrier'] = data[['E8']]
+                    data['environmental_context'] = data[['E6', 'E7']].mean(axis=1)
+                    data['neg_E8'] = -data['E8']
+                    
+                    data['context_of_walking'] = data[['E7', 'neg_E8']].mean(axis=1)
+                    data['typicalness_of_context'] = data[['E6', 'neg_E8']].mean(axis=1)
+                    data['self_management_skills'] = data[['E12.1.1', 'E12.1.2']].mean(axis=1)
+                    data['cue_to_action'] = data[['E12.4', 'E12.7']].mean(axis=1)
+                    data['environmental_context_weekly'] = data[['E13.1', 'E13.2', 'E13.3', 'E13.4', 'E13.5', 'E13.6', 'E13.7']].sum(axis=1)
+                    data['social_support_friends'] = data['E14']
+                elif data_id == 11:
+                    data = src_data[[
+                        'rnum', # participant number
+                        'E5', 'E6', 'E7', 'E8', 'E10', 'E11', 'E12.1.1', 'E12.1.2', 'E12.4', 'E12.7', # individual EMA item
+                        'day_index', 'day_of_week', # date information
+                        'steps', # behavior
+                        'AWND', 'PRCP', 'TMAX', 'TMIN', # weather
+                        'self_efficacy', 'perceived_barrier', 'environmental_context', 'context_of_walking', 'typicalness_of_context', 'self_management_skills', 'cue_to_action', 'environmental_context_weekly', 'social_support_friends'
+                    ]]
+                    data = data.rename(columns={'day_index': 't'})
+                    data = data.drop_duplicates().reset_index(drop=True)
+                else: 
+                    raise Exception("Unknown data_id: {}".format(data_id))
             else:
-                raise Exception("Unknown data_id: {}".format(data_id))
+                if data_id == 1:
+                    data = pd.read_csv('data/ema/ema.csv', low_memory=False)
+                else: 
+                    raise Exception("Unknown data_id: {}".format(data_id))
             data.to_pickle(data_path)
             return data
 
@@ -183,8 +196,7 @@ class EMATestCase(TestCase):
         data = self.try_to_load_data(8, data)
         data = self.try_to_load_data(9, data)
         data = self.try_to_load_data(10, data)
-        logging.debug(data.shape)
-        logging.debug(data)
-
+        data = self.try_to_load_data(11, data)
+    
 if __name__ == '__main__':
     unittest.main()
