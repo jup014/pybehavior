@@ -32,9 +32,9 @@ data_original = data_original.rename(columns={'steps': 'behavior', 'cue_to_actio
 rnum_list = [4, 5, 6, 8, 9, 11, 17, 18, 22, 25, 26, 27, 30, 31, 33, 34, 42, 43, 44, 47, 48]
 
 db = TinyDB('data/ema/db.json')
-queue = TinyDB('data/ema/queue.json')
 
 if not os.path.exists('data/ema/queue.json'):
+    queue = TinyDB('data/ema/queue.json')
     for rnum in rnum_list:
         data = data_original.loc[data_original.rnum == rnum].reset_index(drop=True).copy()
         data = data[columns]
