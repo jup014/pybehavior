@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pybehavior',
-    version='0.0.6',
+    version='0.0.9',
     description='PyBehavior',
     author='jup014',
     author_email='jup014@ucsd.edu',

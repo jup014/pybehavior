@@ -137,3 +137,4 @@ data/
 hours_with_012.csv
 *.sqlite
 log.txt
+graph.graphml
