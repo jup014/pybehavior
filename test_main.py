@@ -24,16 +24,19 @@ columns = list(set([x for (x, y) in relations] + [y for (x, y) in relations]))
 columns2 = columns.copy()
 columns2.remove('behavior')
 
-data_original:pd.DataFrame = pd.read_pickle('data/ema/data11.pickle')
-data_original = data_original.rename(columns={'steps': 'behavior', 'cue_to_action': 'cue'})
+import pymongo
+client = pymongo.MongoClient("mongodb+srv://yourmove_server:{}@cluster0.exk1ym6.mongodb.net/?retryWrites=true&w=majority".format(os.environ.get('MONGO_PASSWORD')))
+
+db = client.bayesldm.db
+queue = client.bayesldm.queue
+input = client.bayesldm.input
+
+downloaded_input = input.find()
+data_original = pd.DataFrame(downloaded_input).drop('_id', axis=1)
 
 rnum_list = [4, 5, 6, 8, 9, 11, 17, 18, 22, 25, 26, 27, 30, 31, 33, 34, 42, 43, 44, 47, 48]
 
-import pymongo
 
-client = pymongo.MongoClient("mongodb+srv://yourmove_server:{}@cluster0.exk1ym6.mongodb.net/?retryWrites=true&w=majority".format(os.environ.get('MONGODB_PASSWORD')))
-db = client.bayesldm.db
-queue = client.bayesldm.queue
 
 ## for the first time
 # save_queue = []
