@@ -1,7 +1,5 @@
-from ast import Tuple
 import datetime
 import os
-from typing import Any, Dict, List, Literal, Optional, Union
 
 import BayesLDM.BayesLDM as BayesLDM
 import pandas as pd
@@ -19,7 +17,7 @@ class Loader:
         user: str,
         start_datetime: str,
         end_datetime: str,
-        values: List[str],
+        values,
     ) -> DataFrame:
         column_list = [user, start_datetime, end_datetime] + values
         return_data = data[column_list].rename(
@@ -53,7 +51,7 @@ class Preprocessor:
     @staticmethod
     def get_resampled_data(
         data: pd.DataFrame,
-        group: Optional[str] = None,
+        group = None,
         start="start",
         end="end",
         span_unit="hour",
@@ -246,7 +244,7 @@ class WeatherProcessor:
         )
         return db_path
 
-    def __safe_convert(self, response, columns: List[str]) -> pd.DataFrame:
+    def __safe_convert(self, response, columns) -> pd.DataFrame:
         if response.count() == 1 and response.first() == {}:
             return pd.DataFrame(columns=columns)
         else:
@@ -469,9 +467,9 @@ class WeatherProcessor:
 class MCMC_Parser:
     def __init__(self, model: BayesLDM.compile):
         assert model is not None, "model must be not None"
-        mcmc: Optional[MCMC] = model.fitted_mcmc
+        mcmc = model.fitted_mcmc
         assert mcmc is not None, "model.fitted_mcmc must be not None"
-        samples: Optional[Dict] = mcmc.get_samples()
+        samples = mcmc.get_samples()
         assert samples is not None, "samples must be not None"
 
         keys = samples.keys()
@@ -560,10 +558,10 @@ class BayesModelBuilder:
     def add_variable(
         self,
         name: str,
-        distribution: Literal["normal", "exponential"]='normal',
-        mean: Union[int, float, str] = 0,
-        stdev: Union[int, float, str] = 1,
-        exponent: Union[int, float, str] = 0.1,
+        distribution,
+        mean = 0,
+        stdev = 1,
+        exponent = 0.1,
     ):
         if distribution == "normal":
             self.variables.append(
@@ -585,11 +583,11 @@ class BayesModelBuilder:
         self,
         name:str,
         index:str="t",
-        distribution: Literal["normal", "exponential"]='normal',
-        gain: Union[int, float, str] =0.9,
-        bias: Union[int, float, str] =0,
-        stdev: Union[int, float, str] =1,
-        exponent: Union[int, float, str] =0.1,
+        distribution="normal",
+        gain=0.9,
+        bias=0,
+        stdev=1,
+        exponent=0.1,
     ):
         self.add_variable(
             name="{}[{}]".format(name, index),
@@ -601,7 +599,7 @@ class BayesModelBuilder:
 
     def add_variable_regression_edge(
         self,
-        edge_list: List[Any],
+        edge_list,
         index: str='t'
     ):
         node_list = []

@@ -134,14 +134,23 @@ def f(job):
 
 if __name__ == '__main__':
     while True:
-        job = queue.find_one_and_update({'status': 'queued'}, {'$set': {'status': 'fetched'}})
-        if job is None:
-            break
+        job_list = list(queue.aggregate([
+            { '$match': { 'status': 'queued' } },
+            { '$sample': { 'size': 1 } }
+        ]))
 
-        p = Process(target=f, args=(job,))
-        p.start()
-        p.join()
-        del p
+        if (len(job_list)>0):
+            job = job_list[0]
+            queue.update_one({"_id": job['_id']}, {'$set': {'status': 'fetched'}})
+            p = Process(target=f, args=(job,))
+            p.start()
+            p.join()
+            del p
+        else:
+            break
+        # job = queue.find_one_and_update({'status': 'queued'}, {'$set': {'status': 'fetched'}})
+        # if job is None:
+        #     break
 
 
 # while True:
