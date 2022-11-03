@@ -378,6 +378,9 @@ class WeatherProcessor:
         return self
 
     def refresh_weather_info(self):
+        # number of stations for each update
+        unit = 3
+
         # per-station check
         station_list_in_location_db = self.location_db[["station_id"]].drop_duplicates()
         station_list_in_weather_db = (
@@ -396,23 +399,28 @@ class WeatherProcessor:
         ## stations never updated
         never_updated = station_list.query("last_date.isnull()")
 
-        response = self.ncei.get_data(
-            datasetid="GHCND",
-            stationid=never_updated["station_id"].to_list(),
-            startdate="2022-01-01",
-            enddate=self.today,
-        )
-        response_df = self.__safe_convert(
-            response,
-            ["station", "date", "datatype", "attribute", "value", "url", "retrieved"],
-        )
-        response_df = response_df[["station", "datatype", "date", "value"]].rename(
-            columns={"station": "station_id"}
-        )
+        full_station_list = never_updated["station_id"].to_list()
 
-        self.weather_by_station_db = pd.concat(
-            [self.weather_by_station_db, response_df], axis=0
-        ).reset_index(drop=True)
+        while len(full_station_list) > 0:
+            chunk_station_list = full_station_list[0:unit]
+            full_station_list = full_station_list[unit:]
+
+            response = self.ncei.get_data(
+                datasetid="GHCND",
+                stationid=chunk_station_list,
+                startdate="2022-01-01",
+                enddate=self.today,
+            )
+            response_df = self.__safe_convert(
+                response,
+                ["station", "date", "datatype", "attribute", "value", "url", "retrieved"],
+            )
+            response_df = response_df[["station", "datatype", "date", "value"]].rename(
+                columns={"station": "station_id"}
+            )
+            self.weather_by_station_db = pd.concat(
+                [self.weather_by_station_db, response_df], axis=0
+            ).reset_index(drop=True)
 
         ## the last update was too old
         target_max_date = self.today - datetime.timedelta(days=3)
@@ -431,7 +439,6 @@ class WeatherProcessor:
             response_df = self.__safe_convert(response, [])
             if response_df.shape[0] > 0:
                 if_updated = True
-                print(response_df)
                 response_df = response_df[
                     ["station", "datatype", "date", "value"]
                 ].rename(columns={"station": "station_id"})

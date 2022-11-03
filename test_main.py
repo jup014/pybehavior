@@ -13,9 +13,10 @@ from pybehavior.tools import MCMC_Parser, BayesModelBuilder
 relations = [
     ('self_efficacy', 'self_efficacy'),
     ('perceived_barrier', 'perceived_barrier'),
-    ('perceived_barrier', 'self_efficacy'),
     ('behavior', 'behavior'),
     ('cue', 'cue'),
+    
+    ('perceived_barrier', 'self_efficacy'),
     ('self_efficacy', 'behavior'),
     ('cue', 'behavior')
     ]
