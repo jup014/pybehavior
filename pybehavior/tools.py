@@ -642,7 +642,7 @@ class BayesModelBuilder:
             for src in src_list:
                 if src != dest:
                     term_list.append(
-                        "tau_{}_{} * {}[{}]".format(src, dest, src, index)
+                        "tau_{}_{} * {}[{}-1]".format(src, dest, src, index)
                     )
                 else:
                     autoregressive = True

@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pybehavior',
-    version='0.0.11',
+    version='0.0.13',
     description='PyBehavior',
     author='jup014',
     author_email='jup014@ucsd.edu',
@@ -10,6 +10,6 @@ setup(
     license='MIT',
     py_modules=['pybehavior'],
     python_requires='>=3',
-    install_requires=['numpy', 'pandas'],
+    install_requires=['numpy', 'pandas', 'pyncei'],
     packages=['pybehavior']
 )
